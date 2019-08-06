@@ -2,22 +2,17 @@ package com.redislabs.university.RU102J.dao;
 
 import com.redislabs.university.RU102J.HostPort;
 import com.redislabs.university.RU102J.TestKeyManager;
-import com.redislabs.university.RU102J.api.MeterReading;
 import com.redislabs.university.RU102J.api.Site;
 import org.junit.*;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
 
 public class SiteDaoRedisImplTest {
@@ -49,11 +44,11 @@ public class SiteDaoRedisImplTest {
     public void generateData() {
         sites = new HashSet<>();
         sites.add(new Site(1, 4.5, 3, "123 Willow St.",
-                "Oakland", "CA", "94577" ));
+                "Oakland", "CA", "94577"));
         sites.add(new Site(2, 3.0, 2, "456 Maple St.",
-                 "Oakland", "CA", "94577" ));
+                "Oakland", "CA", "94577"));
         sites.add(new Site(3, 4.0, 3, "789 Oak St.",
-                 "Oakland", "CA", "94577" ));
+                "Oakland", "CA", "94577"));
     }
 
     /**
@@ -85,7 +80,6 @@ public class SiteDaoRedisImplTest {
      * implement the challenge in Chapter 1.
      */
     @Test
-    @Ignore
     public void findAllWithMultipleSites() {
         SiteDaoRedisImpl dao = new SiteDaoRedisImpl(jedisPool);
         // Insert all sites
@@ -101,7 +95,6 @@ public class SiteDaoRedisImplTest {
      * implement the challenge in Chapter 1.
      */
     @Test
-    @Ignore
     public void findAllWithEmptySites() {
         SiteDaoRedisImpl dao = new SiteDaoRedisImpl(jedisPool);
         assertThat(dao.findAll(), is(empty()));
