@@ -36,9 +36,9 @@ public class CapacityDaoRedisImpl implements CapacityDao {
 
         try (Jedis jedis = jedisPool.getResource()) {
             Pipeline p = jedis.pipelined();
-            Response<Set<Tuple>> lowCapacity = p.zrangeWithScores(key, 0, limit-1);
+            Response<Set<Tuple>> lowCapacity = p.zrangeWithScores(key, 0, limit - 1);
             Response<Set<Tuple>> highCapacity = p.zrevrangeWithScores(key, 0,
-                    limit-1);
+                    limit - 1);
             p.sync();
 
             List<SiteCapacityTuple> lowCapacityList = lowCapacity.get().stream()
@@ -58,6 +58,9 @@ public class CapacityDaoRedisImpl implements CapacityDao {
     // Challenge #4
     @Override
     public Long getRank(Long siteId) {
-        return null;
+        try (Jedis jedis = jedisPool.getResource()) {
+            String key = RedisSchema.getCapacityRankingKey();
+            return jedis.zrevrank(key, String.valueOf(siteId));
+        }
     }
 }
