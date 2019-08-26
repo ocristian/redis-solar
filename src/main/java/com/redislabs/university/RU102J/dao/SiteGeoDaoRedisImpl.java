@@ -8,9 +8,11 @@ import redis.clients.jedis.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static java.lang.String.valueOf;
+
 public class SiteGeoDaoRedisImpl implements SiteGeoDao {
-    private JedisPool jedisPool;
     final static private Double capacityThreshold = 0.2;
+    private JedisPool jedisPool;
 
     public SiteGeoDaoRedisImpl(JedisPool jedisPool) {
         this.jedisPool = jedisPool;
@@ -33,12 +35,24 @@ public class SiteGeoDaoRedisImpl implements SiteGeoDao {
         try (Jedis jedis = jedisPool.getResource()) {
             Set<String> keys = jedis.zrange(RedisSchema.getSiteGeoKey(), 0, -1);
             Set<Site> sites = new HashSet<>(keys.size());
+
+            Set<Response<Map<String, String>>> results = new HashSet<>();
+
+            Pipeline p = jedis.pipelined();
             for (String key : keys) {
-                Map<String, String> site = jedis.hgetAll(key);
-                if (!site.isEmpty()) {
-                    sites.add(new Site(site));
-                }
+                results.add(p.hgetAll(key));
             }
+            p.sync();
+
+            results.forEach(result -> {
+                if (result != null) {
+                    Map<String, String> site = result.get();
+                    if (!site.isEmpty()) {
+                        sites.add(new Site(site));
+                    }
+                }
+            });
+
             return sites;
         }
     }
@@ -53,39 +67,48 @@ public class SiteGeoDaoRedisImpl implements SiteGeoDao {
     }
 
     // Challenge #5
-    private Set<Site> findSitesByGeoWithCapacity(GeoQuery query) {
-        return Collections.emptySet();
-    }
-    /* UNCOMMENT this method for Challenge #5
+//    private Set<Site> findSitesByGeoWithCapacity(GeoQuery query) {
+//        return Collections.emptySet();
+//    }
+    /* UNCOMMENT this method for Challenge #5 */
     private Set<Site> findSitesByGeoWithCapacity(GeoQuery query) {
         Set<Site> results = new HashSet<>();
         Coordinate coord = query.getCoordinate();
         Double radius = query.getRadius();
         GeoUnit radiusUnit = query.getRadiusUnit();
 
-         try (Jedis jedis = jedisPool.getResource()) {
-             // START Challenge #5
+        try (Jedis jedis = jedisPool.getResource()) {
+            // START Challenge #5
 
-             // END Challenge #5
+            List<GeoRadiusResponse> radiusResponses = new ArrayList<>();
+            radiusResponses = jedis.georadius(RedisSchema.getSiteGeoKey(), coord.getLng(), coord.getLat(), radius, radiusUnit);
+            // END Challenge #5
 
-             Set<Site> sites = radiusResponses.stream()
-                     .map(response -> jedis.hgetAll(response.getMemberByString()))
-                     .filter(Objects::nonNull)
-                     .map(Site::new).collect(Collectors.toSet());
+            Set<Site> sites = radiusResponses.stream()
+                    .map(response -> jedis.hgetAll(response.getMemberByString()))
+                    .filter(Objects::nonNull)
+                    .map(Site::new)
+                    .collect(Collectors.toSet());
 
-             // START Challenge #5
+            // START Challenge #5
+            Map<Long, Response<Double>> scores = new HashMap<>(sites.size());
+            Pipeline p = jedis.pipelined();
+            sites.forEach(site ->
+                    scores.put(site.getId(), p.zscore(RedisSchema.getCapacityRankingKey(), valueOf(site.getId())))
+            );
 
-             // END Challnege #5
+            p.sync();
+            // END Challnege #5
 
-             for (Site site : sites) {
-                 if (scores.get(site.getId()).get() >= capacityThreshold) {
-                     results.add(site);
-                 }
-             }
-         }
+            for (Site site : sites) {
+                if (scores.get(site.getId()).get() >= capacityThreshold) {
+                    results.add(site);
+                }
+            }
+        }
 
-         return results;
-    } */
+        return results;
+    }
 
     private Set<Site> findSitesByGeo(GeoQuery query) {
         Coordinate coord = query.getCoordinate();
@@ -106,18 +129,18 @@ public class SiteGeoDaoRedisImpl implements SiteGeoDao {
 
     @Override
     public void insert(Site site) {
-         try (Jedis jedis = jedisPool.getResource()) {
-             String key = RedisSchema.getSiteHashKey(site.getId());
-             jedis.hmset(key, site.toMap());
+        try (Jedis jedis = jedisPool.getResource()) {
+            String key = RedisSchema.getSiteHashKey(site.getId());
+            jedis.hmset(key, site.toMap());
 
-             if (site.getCoordinate() == null) {
-                 throw new IllegalArgumentException("Coordinate required for Geo " +
-                         "insert.");
-             }
-             Double longitude = site.getCoordinate().getGeoCoordinate().getLongitude();
-             Double latitude = site.getCoordinate().getGeoCoordinate().getLatitude();
-             jedis.geoadd(RedisSchema.getSiteGeoKey(), longitude, latitude,
-                     key);
-         }
+            if (site.getCoordinate() == null) {
+                throw new IllegalArgumentException("Coordinate required for Geo " +
+                        "insert.");
+            }
+            Double longitude = site.getCoordinate().getGeoCoordinate().getLongitude();
+            Double latitude = site.getCoordinate().getGeoCoordinate().getLatitude();
+            jedis.geoadd(RedisSchema.getSiteGeoKey(), longitude, latitude,
+                    key);
+        }
     }
 }

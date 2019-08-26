@@ -35,19 +35,21 @@ public class CapacityDaoRedisImpl implements CapacityDao {
         String key = RedisSchema.getCapacityRankingKey();
 
         try (Jedis jedis = jedisPool.getResource()) {
+
             Pipeline p = jedis.pipelined();
             Response<Set<Tuple>> lowCapacity = p.zrangeWithScores(key, 0, limit - 1);
-            Response<Set<Tuple>> highCapacity = p.zrevrangeWithScores(key, 0,
-                    limit - 1);
+            Response<Set<Tuple>> highCapacity = p.zrevrangeWithScores(key, 0, limit - 1);
             p.sync();
 
-            List<SiteCapacityTuple> lowCapacityList = lowCapacity.get().stream()
-                    .map(SiteCapacityTuple::new)
-                    .collect(Collectors.toList());
+            List<SiteCapacityTuple> lowCapacityList =
+                    lowCapacity.get().stream()
+                            .map(SiteCapacityTuple::new)
+                            .collect(Collectors.toList());
 
-            List<SiteCapacityTuple> highCapacityList = highCapacity.get().stream()
-                    .map(SiteCapacityTuple::new)
-                    .collect(Collectors.toList());
+            List<SiteCapacityTuple> highCapacityList =
+                    highCapacity.get().stream()
+                            .map(SiteCapacityTuple::new)
+                            .collect(Collectors.toList());
 
             report = new CapacityReport(highCapacityList, lowCapacityList);
         }

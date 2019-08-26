@@ -8,6 +8,7 @@ import com.redislabs.university.RU102J.api.MeterReading;
 import com.redislabs.university.RU102J.api.MetricUnit;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -72,18 +73,21 @@ public class MetricDaoRedisTSImplTest {
         Collections.reverse(readings);
     }
 
-    @Test
+//    @Test
+    @Ignore
     public void testSmall() {
         testInsertAndRetrieve(1);
     }
 
-    @Test
+//    @Test
+    @Ignore
     public void testOneDay() {
         testInsertAndRetrieve(60 * 24);
     }
 
 
-    @Test
+//    @Test
+    @Ignore
     public void testMultipleDays() {
         testInsertAndRetrieve(60 * 70);
     }
