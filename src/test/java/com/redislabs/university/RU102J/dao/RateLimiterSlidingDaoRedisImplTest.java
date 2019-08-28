@@ -7,10 +7,12 @@ import org.junit.rules.ExpectedException;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
+import java.time.Instant;
+
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
-public class RateLimiterFixedDaoRedisImplTest {
+public class RateLimiterSlidingDaoRedisImplTest {
 
     private static JedisPool jedisPool;
     private static Jedis jedis;
@@ -40,7 +42,9 @@ public class RateLimiterFixedDaoRedisImplTest {
     @Test
     public void hit() {
         int exceptionCount = 0;
-        RateLimiter limiter = new RateLimiterFixedDaoRedisImpl(jedisPool, MinuteInterval.ONE, 10);
+
+        RateLimiter limiter = new RateLimiterSlidingDaoRedisImpl(jedisPool, Instant.now().toEpochMilli(), 10);
+
         for (int i = 0; i < 10; i++) {
             try {
                 limiter.hit("foo");
@@ -53,6 +57,19 @@ public class RateLimiterFixedDaoRedisImplTest {
     }
 
     @Test
-    public void getMinuteOfDayBlock() {
+    public void hitMax3Times() {
+        int exceptionCount = 0;
+
+        RateLimiter limiter = new RateLimiterSlidingDaoRedisImpl(jedisPool, Instant.now().toEpochMilli(), 3);
+
+        for (int i = 0; i < 10; i++) {
+            try {
+                limiter.hit("foo");
+            } catch (RateLimitExceededException e) {
+                exceptionCount += 1;
+            }
+        }
+
+        assertThat(exceptionCount, is(7));
     }
 }

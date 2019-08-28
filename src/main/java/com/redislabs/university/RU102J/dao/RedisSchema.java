@@ -35,12 +35,8 @@ public class RedisSchema {
 
     // limiter:[name]:[duration]:[maxHits]
     // Redis type: string of type integer
-    static String getRateLimiterKey(String name, int minuteBlock,
-                                    long maxHits) {
-        return KeyHelper.getKey("limiter:" +
-                name + ":" +
-                String.valueOf(minuteBlock) + ":" +
-                String.valueOf(maxHits));
+    static String getRateLimiterKey(String name, int minuteBlock, long maxHits) {
+        return KeyHelper.getKey("limiter:" + name + ":" + minuteBlock + ":" + maxHits);
     }
 
     // sites:geo
