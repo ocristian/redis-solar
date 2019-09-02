@@ -1,6 +1,7 @@
 package com.redislabs.university.RU102J.core;
 
-import com.redislabs.university.RU102J.api.*;
+import com.redislabs.university.RU102J.api.MeterReading;
+import com.redislabs.university.RU102J.api.Site;
 import com.redislabs.university.RU102J.dao.*;
 import com.redislabs.university.RU102J.resources.MeterReadingResource;
 import redis.clients.jedis.Jedis;
@@ -35,7 +36,7 @@ public class SampleDataGenerator {
 
         SiteStatsDao siteStatsDao = new SiteStatsDaoRedisImpl(jedisPool);
         CapacityDao capacityDao = new CapacityDaoRedisImpl(jedisPool);
-        MetricDao metricDao = new MetricDaoRedisZsetImpl(jedisPool);
+        MetricDao metricDao = new MetricDaoRedisTSImpl(jedisPool);
         FeedDao feedDao = new FeedDaoRedisImpl(jedisPool);
         MeterReadingResource meterResource = new MeterReadingResource(siteStatsDao, metricDao,
                 capacityDao, feedDao);

@@ -1,11 +1,13 @@
 package com.redislabs.university.RU102J;
 
-import com.redislabs.redistimeseries.RedisTimeSeries;
 import com.redislabs.university.RU102J.command.LoadCommand;
 import com.redislabs.university.RU102J.command.RunCommand;
 import com.redislabs.university.RU102J.dao.*;
 import com.redislabs.university.RU102J.health.RediSolarHealthCheck;
-import com.redislabs.university.RU102J.resources.*;
+import com.redislabs.university.RU102J.resources.CapacityResource;
+import com.redislabs.university.RU102J.resources.MeterReadingResource;
+import com.redislabs.university.RU102J.resources.MetricsResource;
+import com.redislabs.university.RU102J.resources.SiteGeoResource;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
@@ -44,10 +46,10 @@ public class RediSolarApplication extends Application<RediSolarConfiguration> {
         environment.jersey().register(siteResource);
 
         // For RedisTimeSeries: replace the next lines with
-        // MetricsResource metricsResource =
-        //              new MetricsResource(new MetricDaoRedisTSImpl(jedisPool));
-                MetricsResource metricsResource =
-                        new MetricsResource(new MetricDaoRedisZsetImpl(jedisPool));
+         MetricsResource metricsResource =
+                      new MetricsResource(new MetricDaoRedisTSImpl(jedisPool));
+//                MetricsResource metricsResource =
+//                        new MetricsResource(new MetricDaoRedisZsetImpl(jedisPool));
         environment.jersey().register(metricsResource);
 
         CapacityResource capacityResource =
